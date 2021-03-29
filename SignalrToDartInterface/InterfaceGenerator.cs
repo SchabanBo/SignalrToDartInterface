@@ -26,6 +26,7 @@ namespace SignalRToDartInterface {
             typeof(object),
             typeof(char),
             typeof(Task),
+            typeof(Task<>),
             typeof(Exception),
             typeof(Type),
             typeof(DateTime[]),
@@ -68,7 +69,7 @@ namespace SignalRToDartInterface {
             result += "}";
             foreach (var type in _typesToGenerate) {
                 result += result.AddNewLine(3);
-                result += new InterfaceGenerator(new GenerateRequest(type, skipMethodsToChildren: _request.SkipMethodsToChildren)).Generate();
+                result += type.IsEnum ? new EnumGenerator(type).Generate() : new InterfaceGenerator(new GenerateRequest(type, skipMethodsToChildren: _request.SkipMethodsToChildren)).Generate();
             }
             return result;
         }
@@ -88,7 +89,7 @@ namespace SignalRToDartInterface {
             var result = "";
             if (_request.IsSignalRHub) {
                 result += result.AddTab();
-                result += "final HubConnection _connection;";
+                result += "final HubConnection connection;";
                 result += result.AddNewLine();
             }
 
@@ -99,7 +100,10 @@ namespace SignalRToDartInterface {
             result += result.AddTab();
             result += $"{_request.Type.Name}(";
             if (_request.IsSignalRHub) {
-                result += "this._connection, ";
+                result += "this.connection";
+                if (_request.Properties.Any()) {
+                    result += ", ";
+                }
             }
             result += string.Join(", ",
                 _request.Properties.Select(p => $"this.{GetPropertyName(p.Name)}"));
@@ -132,10 +136,13 @@ namespace SignalRToDartInterface {
             }
             result += ")";
             if (_request.IsSignalRHub) {
-                result += " => ";
+                var hasResult = method.ReturnType.GetGenericArguments().Any();
+                result += $" {(hasResult ? "async " : "")}=> ";
                 result += result.AddNewLine();
                 result += result.AddTab(2);
-                result += $"_connection.send(methodName: '{name}',args: <Object>[{string.Join(", ", args)}]);";
+                result += (hasResult ? "await connection.invoke" : "connection.send") + $"(methodName: '{name}'";
+                result += args.Any() ? $" ,args: <Object>[{ string.Join(", ", args)}]" : "";
+                result += ");";
             } else {
                 result += " { }";
             }
@@ -158,7 +165,7 @@ namespace SignalRToDartInterface {
                 from += from.AddTab(2);
                 to += to.AddTab(2);
                 if (type.Contains("List")) {
-                    var subType = type[(type.IndexOf("<", StringComparison.Ordinal)+1)..^1];
+                    var subType = GetSubType(type);
                     var isStandardTypes = StandardTypes.Contains(subType);
                     from += $" {name} =json['{name}'] == null ? <{subType}>[] : {type}.from(json['{name}'].map((x) =>";
                     from += isStandardTypes ? "x))" : $"{subType}.fromJson(x)))";
@@ -191,6 +198,9 @@ namespace SignalRToDartInterface {
             if (type == typeof(Task) && _request.IsSignalRHub) {
                 return "void";
             }
+            if (type.BaseType == typeof(Task) && type.GetGenericArguments().Any()) {
+                return $"Future<{GetTypeName(type.GetGenericArguments().First())}>";
+            }
             if (type.Name == "String") {
                 return type.Name;
             }
@@ -204,12 +214,15 @@ namespace SignalRToDartInterface {
                 return $"List<{GetTypeName(type.GetGenericArguments().First())}>";
             }
             if (!KnownType.Contains(type) && !_typesToGenerate.Contains(type)) {
-                _typesToGenerate.Add(type);
+                if (!type.GetGenericArguments().Any()) {
+                    _typesToGenerate.Add(type);
+                }
             }
             return type.ToDartType();
         }
 
         private static string GetPropertyName(string name) => $"{name[0].ToString().ToLower()}{name[1..]}";
 
+        private static string GetSubType(string type) => type[(type.IndexOf("<", StringComparison.Ordinal) + 1)..^1];
     }
 }

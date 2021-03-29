@@ -19,12 +19,14 @@ namespace SignalRToDartInterface.ExampleHub {
     /// User Hub Add Edit Delete Get Update
     /// </summary>
     public partial class ExampleHub /*** : Hub ***/ {
-        public async Task A_User(AddUser command) {
-            // Do work
+        public Task<string> A_User(AddUser command)
+        {
+            return Task.FromResult("Result");
         }
 
-        public async Task U_User(UpdateUser command) {
-            // Do work
+        public Task<HubResult> U_User(UpdateUser command)
+        {
+            return Task.FromResult(new HubResult());
         }
 
         public async Task D_User(DeleteUser id) {

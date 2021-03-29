@@ -1,9 +1,8 @@
-﻿using SignalRToDartInterface.ExampleHub;
-using SignalRToDartInterface.ExampleHub.Types;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using SignalRToDartInterface.ExampleHub;
 
 namespace SignalRToDartInterface {
     class Program {
@@ -13,8 +12,6 @@ namespace SignalRToDartInterface {
                 new List<string>{ "Mapping" },
                 isSignalRHub:true),
             new (typeof(HubResponses)),
-            new (typeof(User)),
-            new (typeof(Account)),
         };
 
         static void Main(string[] args) {
