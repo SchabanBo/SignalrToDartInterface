@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using SignalRToDartInterface.ExampleHub;
+using SignalRToDartInterface.ExampleHub.Types;
 
 namespace SignalRToDartInterface {
     class Program {
@@ -11,6 +13,7 @@ namespace SignalRToDartInterface {
                 new List<string> {"Return","OnConnectedAsync","OnDisconnectedAsync","Dispose"},
                 new List<string>{ "Mapping" },
                 isSignalRHub:true),
+            new (typeof(Account)),
             new (typeof(HubResponses)),
         };
 

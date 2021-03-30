@@ -57,10 +57,8 @@ namespace SignalRToDartInterface {
             result += $"class {_request.Type.Name}";
             result += "{";
             result += result.AddNewLine();
-            result += string.Join("", _request.Properties.Select(GetProperty));
-            result += result.AddNewLine();
             result += GetConstructor();
-            result += result.AddNewLine(2);
+            result += result.AddNewLine();
             result += string.Join("", _request.Methods.Select(GetMethod));
             if (_request.Properties.Any()) {
                 result += result.AddNewLine();
@@ -74,40 +72,43 @@ namespace SignalRToDartInterface {
             return result;
         }
 
-        private string GetProperty(PropertyInfo property) {
-            var result = "".AddTab();
-            result += "final ";
-            result += GetTypeName(property.PropertyType);
-            result += result.AddSpace();
-            result += GetPropertyName(property.Name);
-            result += ";";
-            result += result.AddNewLine();
-            return result;
-        }
-
         private string GetConstructor() {
             var result = "";
-            if (_request.IsSignalRHub) {
-                result += result.AddTab();
-                result += "final HubConnection connection;";
-                result += result.AddNewLine();
-            }
 
             if (!_request.IsSignalRHub && !_request.Properties.Any()) {
                 return result;
             }
 
-            result += result.AddTab();
-            result += $"{_request.Type.Name}(";
-            if (_request.IsSignalRHub) {
-                result += "this.connection";
-                if (_request.Properties.Any()) {
-                    result += ", ";
+            var props = _request.Properties.Select(p => {
+                var type = GetTypeName(p.PropertyType);
+                var isNullable = type.Contains("?");
+                var required = StandardTypes.Contains(type) && !isNullable;
+                var name = GetPropertyName(p.Name);
+                if (required || isNullable) {
+                    return new { Type = type, Name = name, Required = required, hasValue = false, value = "" };
                 }
+
+                if (type.Contains("List")) {
+                    return new { Type = type, Name = name, Required = false, hasValue = true, value = "const []" };
+                }
+
+                return new { Type = type + "?", Name = name, Required = false, hasValue = false, value = "" };
+            }).ToList();
+
+            if (_request.IsSignalRHub) {
+                props.Add(new { Type = "HubConnection", Name = "connection", Required = true, hasValue = true, value = "" });
             }
-            result += string.Join(", ",
-                _request.Properties.Select(p => $"this.{GetPropertyName(p.Name)}"));
-            result += ");";
+
+            foreach (var prop in props) {
+                result += result.AddTab();
+                result += $"final {prop.Type} {prop.Name};";
+                result += result.AddNewLine();
+            }
+
+            result += result.AddTab();
+            result += $"const {_request.Type.Name}(" + "{";
+            result += string.Join(", ", props.Select(p => p.Required ? $"required this.{p.Name}" : ($"this.{p.Name} " + (p.hasValue ? $"= {p.value}" : ""))));
+            result += "});";
 
             return result;
         }
@@ -140,8 +141,8 @@ namespace SignalRToDartInterface {
                 result += $" {(hasResult ? "async " : "")}=> ";
                 result += result.AddNewLine();
                 result += result.AddTab(2);
-                result += (hasResult ? "await connection.invoke" : "connection.send") + $"(methodName: '{name}'";
-                result += args.Any() ? $" ,args: <Object>[{ string.Join(", ", args)}]" : "";
+                result += (hasResult ? "await connection.invoke(" : "connection.send(methodName: ") + $"'{name}'";
+                result += args.Any() ? $" ,args: [{ string.Join(", ", args)}]" : "";
                 result += ");";
             } else {
                 result += " { }";
@@ -221,8 +222,9 @@ namespace SignalRToDartInterface {
             return type.ToDartType();
         }
 
-        private static string GetPropertyName(string name) => $"{name[0].ToString().ToLower()}{name[1..]}";
+        public static string GetPropertyName(string name) => $"{name[0].ToString().ToLower()}{name[1..]}";
 
-        private static string GetSubType(string type) => type[(type.IndexOf("<", StringComparison.Ordinal) + 1)..^1];
+        public static string GetSubType(string type) => type[(type.IndexOf("<", StringComparison.Ordinal) + 1)..^1];
+
     }
 }
