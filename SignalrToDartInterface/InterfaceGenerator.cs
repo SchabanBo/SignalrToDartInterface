@@ -82,7 +82,7 @@ namespace SignalRToDartInterface {
             var props = _request.Properties.Select(p => {
                 var type = GetTypeName(p.PropertyType);
                 var isNullable = type.Contains("?");
-                var required = StandardTypes.Contains(type) && !isNullable;
+                var required = StandardTypes.Contains(type) && !isNullable && type != "String" && _request.IsNullSafety; // Set string always to nullable
                 var name = GetPropertyName(p.Name);
                 if (required || isNullable) {
                     return new { Type = type, Name = name, Required = required, hasValue = false, value = "" };
@@ -92,7 +92,7 @@ namespace SignalRToDartInterface {
                     return new { Type = type, Name = name, Required = false, hasValue = true, value = "const []" };
                 }
 
-                return new { Type = type + "?", Name = name, Required = false, hasValue = false, value = "" };
+                return new { Type = type + (_request.IsNullSafety ? "?" : ""), Name = name, Required = false, hasValue = false, value = "" };
             }).ToList();
 
             if (_request.IsSignalRHub) {
@@ -107,7 +107,7 @@ namespace SignalRToDartInterface {
 
             result += result.AddTab();
             result += $"const {_request.Type.Name}(" + "{";
-            result += string.Join(", ", props.Select(p => p.Required ? $"required this.{p.Name}" : ($"this.{p.Name} " + (p.hasValue ? $"= {p.value}" : ""))));
+            result += string.Join(", ", props.Select(p => p.Required ? $"{(_request.IsNullSafety ? "@" : "")}required this.{p.Name}" : ($"this.{p.Name} " + (p.hasValue ? $"= {p.value}" : ""))));
             result += "});";
 
             return result;
@@ -205,7 +205,7 @@ namespace SignalRToDartInterface {
             if (type.Name == "String") {
                 return type.Name;
             }
-            if (type.IsNullableType()) {
+            if (type.IsNullableType() && _request.IsNullSafety) {
                 return type.GetTypeOfNullable().ToDartType() + "?";
             }
             if (type.IsArray) {

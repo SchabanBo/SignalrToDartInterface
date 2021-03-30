@@ -5,6 +5,7 @@ using System.Reflection;
 
 namespace SignalRToDartInterface {
     public class GenerateRequest {
+        public bool IsNullSafety { get; set; } = false;
         public Type Type { get; set; }
         public List<string> SkipMethodsToChildren { get; }
         public bool IsSignalRHub { get; set; }
@@ -12,7 +13,7 @@ namespace SignalRToDartInterface {
         public List<MethodInfo> Methods { get; }
         public List<PropertyInfo> Properties { get; }
 
-        public GenerateRequest(Type type , List<string> skipMethods = null, List<string> skipMethodsToChildren = null, List<string> skipProperties =null, bool isSignalRHub = false) {
+        public GenerateRequest(Type type, List<string> skipMethods = null, List<string> skipMethodsToChildren = null, List<string> skipProperties = null, bool isSignalRHub = false) {
             Type = type;
             SkipMethodsToChildren = skipMethodsToChildren ?? new List<string>();
             IsSignalRHub = isSignalRHub;
@@ -25,7 +26,7 @@ namespace SignalRToDartInterface {
                 skipProperties.Add("Context");
                 skipProperties.Add("Groups");
             }
-            skipMethods.AddRange(new[] { "Equals", "ToString", "GetHashCode", "GetType" }); 
+            skipMethods.AddRange(new[] { "Equals", "ToString", "GetHashCode", "GetType" });
             var propertiesGetters = Properties.Select(p => $"get_{p.Name}").ToArray();
             var propertiesSetters = Properties.Select(p => $"set_{p.Name}").ToArray();
             Properties.RemoveAll(p => skipProperties.Contains(p.Name));
