@@ -52,6 +52,7 @@ namespace SignalRToDartInterface {
                 result += $"// File generated at {DateTime.Now}";
                 result += result.AddNewLine();
                 result += "import 'package:signalr_core/signalr_core.dart';";
+                result += "import 'package:flutter/widgets.dart';";
                 result += result.AddNewLine();
             }
             result += $"class {_request.Type.Name}";
@@ -107,7 +108,7 @@ namespace SignalRToDartInterface {
 
             result += result.AddTab();
             result += $"const {_request.Type.Name}(" + "{";
-            result += string.Join(", ", props.Select(p => p.Required ? $"{(_request.IsNullSafety ? "@" : "")}required this.{p.Name}" : ($"this.{p.Name} " + (p.hasValue ? $"= {p.value}" : ""))));
+            result += string.Join(", ", props.Select(p => p.Required ? $"{(_request.IsNullSafety ? "" : " @")}required this.{p.Name}" : ($"this.{p.Name} " + (p.hasValue ? $"= {p.value}" : ""))));
             result += "});";
 
             return result;
@@ -141,9 +142,20 @@ namespace SignalRToDartInterface {
                 result += $" {(hasResult ? "async " : "")}=> ";
                 result += result.AddNewLine();
                 result += result.AddTab(2);
-                result += (hasResult ? "await connection.invoke(" : "connection.send(methodName: ") + $"'{name}'";
+                var resultFromJson = "";
+                var typeConverter = "";
+                if (hasResult) {
+                    var typeGeneric = GetTypeName(method.ReturnType.GetGenericArguments().First());
+                    if (!StandardTypes.Contains(typeGeneric)) {
+                        resultFromJson = typeGeneric + ".fromJson(";
+                        typeConverter = "as Map<String,dynamic>";
+                    } else {
+                        typeConverter = " as " + typeGeneric;
+                    }
+                }
+                result += (hasResult ? $"{resultFromJson} await connection.invoke(" : "connection.send(methodName: ") + $"'{name}'";
                 result += args.Any() ? $" ,args: [{ string.Join(", ", args)}]" : "";
-                result += ");";
+                result += string.IsNullOrWhiteSpace(resultFromJson) ? $"){typeConverter};" : $"){typeConverter});";
             } else {
                 result += " { }";
             }
@@ -169,11 +181,14 @@ namespace SignalRToDartInterface {
                     var subType = GetSubType(type);
                     var isStandardTypes = StandardTypes.Contains(subType);
                     from += $" {name} =json['{name}'] == null ? <{subType}>[] : {type}.from(json['{name}'].map((x) =>";
-                    from += isStandardTypes ? "x))" : $"{subType}.fromJson(x)))";
+                    from += isStandardTypes ? "x) as Iterable)" : $"{subType}.fromJson(x as Map<String, dynamic>)) as Iterable)";
                     to += $"'{name}': List<dynamic>.from({name}.map((x) =>";
                     to += isStandardTypes ? "x))" : " x.toJson()))";
+                } else if (typeProperty.PropertyType.IsEnum) {
+                    from += $" {name} = {type}.values[json['{name}'] as int]";
+                    to += $"'{name}': {name}.index";
                 } else {
-                    from += $" {name} = json['{name}']";
+                    from += $" {name} = json['{name}'] as {type}";
                     to += $"'{name}': {name}";
                 }
                 if (_request.Properties.Last() != typeProperty) {
@@ -205,8 +220,8 @@ namespace SignalRToDartInterface {
             if (type.Name == "String") {
                 return type.Name;
             }
-            if (type.IsNullableType() && _request.IsNullSafety) {
-                return type.GetTypeOfNullable().ToDartType() + "?";
+            if (type.IsNullableType()) {
+                return type.GetTypeOfNullable().ToDartType() + (_request.IsNullSafety ? "?" : "");
             }
             if (type.IsArray) {
                 return $"List<{GetTypeName(type.GetElementType())}>";

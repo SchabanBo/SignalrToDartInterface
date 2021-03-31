@@ -8,6 +8,7 @@ namespace SignalRToDartInterface.ExampleHub.Types {
         public string Password { get; set; }
         public List<string> Rights { get; set; }
         public DateTime LastVisit { get; set; }
+        public AccountType AccountType { get; set; }
     }
 
     public class AddAccount {
@@ -33,5 +34,10 @@ namespace SignalRToDartInterface.ExampleHub.Types {
 
     public class GetAccount {
         public int Id { get; set; }
+    }
+
+    public enum AccountType {
+        CheckIn,
+        CheckOut,
     }
 }
