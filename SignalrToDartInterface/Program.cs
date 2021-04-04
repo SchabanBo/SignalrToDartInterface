@@ -1,10 +1,9 @@
-﻿using System;
+﻿using SignalRToDartInterface.ExampleHub;
+using SignalRToDartInterface.ExampleHub.Types;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using SignalRToDartInterface.ExampleHub;
-using SignalRToDartInterface.ExampleHub.Types;
 
 namespace SignalRToDartInterface {
     class Program {

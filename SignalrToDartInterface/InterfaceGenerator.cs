@@ -37,6 +37,8 @@ namespace SignalRToDartInterface {
             typeof(char[]),
             typeof(Task[]),
             typeof(Exception[]),
+            typeof(TypeCode),
+            typeof(Int32)
         };
 
         private readonly List<Type> _typesToGenerate = new();

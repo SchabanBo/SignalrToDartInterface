@@ -9,15 +9,11 @@ namespace SignalRToDartInterface {
     public static class TypeExtensions {
 
         public static string ToDartType(this Type type) {
-            if (type.Name == "Int32") {
-                return "int";
-            }
-            if (type.Name == "Void") {
-                return "void";
-            }
-            if (type.Name == "Double") {
-                return "double";
-            }
+            if (type.Name == "Int32") return "int";
+            if (type.Name == "Void") return "void";
+            if (type.Name == "Double") return "double";
+            if (type.Name == "Boolean") return "bool";
+
             return type.Name;
         }
 

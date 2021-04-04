@@ -17,43 +17,40 @@ The package will convert the type and any other type that used in it.
 var result = ConvertSignalRToDart.Convert(Requests.ToList());
 ```
 The result of this [ExampleHub](https://github.com/SchabanBo/SignalrToDartInterface/tree/master/SignalrToDartInterface/ExampleHub) is
-```dart
-// File generated at 3/24/2021 8:18:02 PM
-import 'package:signalr_core/signalr_core.dart';
+```dart// File generated at 4/4/2021 2:40:37 PM
+import 'package:signalr_core/signalr_core.dart';import 'package:flutter/widgets.dart';
 class ExampleHub{
+   final HubConnection connection;
+   const ExampleHub({ @required this.connection});
+   Future<String> A_User(AddUser command) async =>
+       await connection.invoke('A_User' ,args: [command]) as String;
 
-   final HubConnection _connection;
-   ExampleHub(this._connection, );
-
-   void A_User(AddUser command) =>
-      _connection.send(methodName: 'A_User',args: <Object>[command]);
-
-   void U_User(UpdateUser command) =>
-      _connection.send(methodName: 'U_User',args: <Object>[command]);
+   Future<HubResult> U_User(UpdateUser command) async =>
+      HubResult.fromJson( await connection.invoke('U_User' ,args: [command])as Map<String,dynamic>);
 
    void D_User(DeleteUser id) =>
-      _connection.send(methodName: 'D_User',args: <Object>[id]);
+      connection.send(methodName: 'D_User' ,args: [id]);
 
    void G_User(int id) =>
-      _connection.send(methodName: 'G_User',args: <Object>[id]);
+      connection.send(methodName: 'G_User' ,args: [id]);
 
    void GA_User() =>
-      _connection.send(methodName: 'GA_User',args: <Object>[]);
+      connection.send(methodName: 'GA_User');
 
    void A_Account(AddAccount command) =>
-      _connection.send(methodName: 'A_Account',args: <Object>[command]);
+      connection.send(methodName: 'A_Account' ,args: [command]);
 
    void U__Account(UpdateAccount command) =>
-      _connection.send(methodName: 'U__Account',args: <Object>[command]);
+      connection.send(methodName: 'U__Account' ,args: [command]);
 
    void D__Account(DeleteAccount id) =>
-      _connection.send(methodName: 'D__Account',args: <Object>[id]);
+      connection.send(methodName: 'D__Account' ,args: [id]);
 
    void G_Account(GetAccount id) =>
-      _connection.send(methodName: 'G_Account',args: <Object>[id]);
+      connection.send(methodName: 'G_Account' ,args: [id]);
 
    void GA_Account() =>
-      _connection.send(methodName: 'GA_Account',args: <Object>[]);
+      connection.send(methodName: 'GA_Account');
 
 }
 
@@ -63,15 +60,13 @@ class AddUser{
    final String lastName;
    final int age;
    final List<Address> addresses;
-
-   AddUser(this.firstName, this.lastName, this.age, this.addresses);
-
+   const AddUser({this.firstName , this.lastName , this.age , this.addresses = const []});
 
    AddUser.fromJson(Map<String, dynamic> json):
-       firstName = json['firstName'],
-       lastName = json['lastName'],
-       age = json['age'],
-       addresses =json['addresses'] == null ? <Address>[] : List<Address>.from(json['addresses'].map((x) =>Address.fromJson(x)));
+       firstName = json['firstName'] as String,
+       lastName = json['lastName'] as String,
+       age = json['age'] as int,
+       addresses =json['addresses'] == null ? <Address>[] : List<Address>.from(json['addresses'].map((x) =>Address.fromJson(x as Map<String, dynamic>)) as Iterable);
 
    Map<String, dynamic> toJson() => {
       'firstName': firstName,
@@ -86,14 +81,12 @@ class Address{
    final String city;
    final String street;
    final String number;
-
-   Address(this.city, this.street, this.number);
-
+   const Address({this.city , this.street , this.number });
 
    Address.fromJson(Map<String, dynamic> json):
-       city = json['city'],
-       street = json['street'],
-       number = json['number'];
+       city = json['city'] as String,
+       street = json['street'] as String,
+       number = json['number'] as String;
 
    Map<String, dynamic> toJson() => {
       'city': city,
@@ -103,22 +96,42 @@ class Address{
 }
 
 
+class HubResult{
+   final Result result;
+   final String message;
+   const HubResult({this.result , this.message });
+
+   HubResult.fromJson(Map<String, dynamic> json):
+       result = Result.values[json['result'] as int],
+       message = json['message'] as String;
+
+   Map<String, dynamic> toJson() => {
+      'result': result.index,
+      'message': message
+   };
+}
+
+
+enum Result{
+   Done,
+   Error,
+}
+
+
 class UpdateUser{
    final int id;
    final String firstName;
    final String lastName;
    final int age;
    final List<Address> addresses;
-
-   UpdateUser(this.id, this.firstName, this.lastName, this.age, this.addresses);
-
+   const UpdateUser({this.id , this.firstName , this.lastName , this.age , this.addresses = const []});
 
    UpdateUser.fromJson(Map<String, dynamic> json):
-       id = json['id'],
-       firstName = json['firstName'],
-       lastName = json['lastName'],
-       age = json['age'],
-       addresses =json['addresses'] == null ? <Address>[] : List<Address>.from(json['addresses'].map((x) =>Address.fromJson(x)));
+       id = json['id'] as int,
+       firstName = json['firstName'] as String,
+       lastName = json['lastName'] as String,
+       age = json['age'] as int,
+       addresses =json['addresses'] == null ? <Address>[] : List<Address>.from(json['addresses'].map((x) =>Address.fromJson(x as Map<String, dynamic>)) as Iterable);
 
    Map<String, dynamic> toJson() => {
       'id': id,
@@ -132,12 +145,10 @@ class UpdateUser{
 
 class DeleteUser{
    final int id;
-
-   DeleteUser(this.id);
-
+   const DeleteUser({this.id });
 
    DeleteUser.fromJson(Map<String, dynamic> json):
-       id = json['id'];
+       id = json['id'] as int;
 
    Map<String, dynamic> toJson() => {
       'id': id
@@ -151,16 +162,14 @@ class AddAccount{
    final String password;
    final List<String> rights;
    final DateTime lastVisit;
-
-   AddAccount(this.userName, this.email, this.password, this.rights, this.lastVisit);
-
+   const AddAccount({this.userName , this.email , this.password , this.rights = const [], this.lastVisit });
 
    AddAccount.fromJson(Map<String, dynamic> json):
-       userName = json['userName'],
-       email = json['email'],
-       password = json['password'],
-       rights =json['rights'] == null ? <String>[] : List<String>.from(json['rights'].map((x) =>x)),
-       lastVisit = json['lastVisit'];
+       userName = json['userName'] as String,
+       email = json['email'] as String,
+       password = json['password'] as String,
+       rights =json['rights'] == null ? <String>[] : List<String>.from(json['rights'].map((x) =>x) as Iterable),
+       lastVisit = json['lastVisit'] as DateTime;
 
    Map<String, dynamic> toJson() => {
       'userName': userName,
@@ -179,17 +188,15 @@ class UpdateAccount{
    final String password;
    final List<String> rights;
    final DateTime lastVisit;
-
-   UpdateAccount(this.id, this.userName, this.email, this.password, this.rights, this.lastVisit);
-
+   const UpdateAccount({this.id , this.userName , this.email , this.password , this.rights = const [], this.lastVisit });
 
    UpdateAccount.fromJson(Map<String, dynamic> json):
-       id = json['id'],
-       userName = json['userName'],
-       email = json['email'],
-       password = json['password'],
-       rights =json['rights'] == null ? <String>[] : List<String>.from(json['rights'].map((x) =>x)),
-       lastVisit = json['lastVisit'];
+       id = json['id'] as int,
+       userName = json['userName'] as String,
+       email = json['email'] as String,
+       password = json['password'] as String,
+       rights =json['rights'] == null ? <String>[] : List<String>.from(json['rights'].map((x) =>x) as Iterable),
+       lastVisit = json['lastVisit'] as DateTime;
 
    Map<String, dynamic> toJson() => {
       'id': id,
@@ -204,12 +211,10 @@ class UpdateAccount{
 
 class DeleteAccount{
    final int id;
-
-   DeleteAccount(this.id);
-
+   const DeleteAccount({this.id });
 
    DeleteAccount.fromJson(Map<String, dynamic> json):
-       id = json['id'];
+       id = json['id'] as int;
 
    Map<String, dynamic> toJson() => {
       'id': id
@@ -219,48 +224,13 @@ class DeleteAccount{
 
 class GetAccount{
    final int id;
-
-   GetAccount(this.id);
-
+   const GetAccount({this.id });
 
    GetAccount.fromJson(Map<String, dynamic> json):
-       id = json['id'];
+       id = json['id'] as int;
 
    Map<String, dynamic> toJson() => {
       'id': id
-   };
-}
-
-
-enum HubResponses{
-   R_User,
-   R_Account,
-}
-
-
-class User{
-   final int id;
-   final String firstName;
-   final String lastName;
-   final int age;
-   final List<Address> addresses;
-
-   User(this.id, this.firstName, this.lastName, this.age, this.addresses);
-
-
-   User.fromJson(Map<String, dynamic> json):
-       id = json['id'],
-       firstName = json['firstName'],
-       lastName = json['lastName'],
-       age = json['age'],
-       addresses =json['addresses'] == null ? <Address>[] : List<Address>.from(json['addresses'].map((x) =>Address.fromJson(x)));
-
-   Map<String, dynamic> toJson() => {
-      'id': id,
-      'firstName': firstName,
-      'lastName': lastName,
-      'age': age,
-      'addresses': List<dynamic>.from(addresses.map((x) => x.toJson()))
    };
 }
 
@@ -271,23 +241,37 @@ class Account{
    final String password;
    final List<String> rights;
    final DateTime lastVisit;
-
-   Account(this.userName, this.email, this.password, this.rights, this.lastVisit);
-
+   final AccountType accountType;
+   const Account({this.userName , this.email , this.password , this.rights = const [], this.lastVisit , this.accountType });
 
    Account.fromJson(Map<String, dynamic> json):
-       userName = json['userName'],
-       email = json['email'],
-       password = json['password'],
-       rights =json['rights'] == null ? <String>[] : List<String>.from(json['rights'].map((x) =>x)),
-       lastVisit = json['lastVisit'];
+       userName = json['userName'] as String,
+       email = json['email'] as String,
+       password = json['password'] as String,
+       rights =json['rights'] == null ? <String>[] : List<String>.from(json['rights'].map((x) =>x) as Iterable),
+       lastVisit = json['lastVisit'] as DateTime,
+       accountType = AccountType.values[json['accountType'] as int];
 
    Map<String, dynamic> toJson() => {
       'userName': userName,
       'email': email,
       'password': password,
       'rights': List<dynamic>.from(rights.map((x) =>x)),
-      'lastVisit': lastVisit
+      'lastVisit': lastVisit,
+      'accountType': accountType.index
    };
 }
+
+
+enum AccountType{
+   CheckIn,
+   CheckOut,
+}
+
+
+enum HubResponses{
+   R_User,
+   R_Account,
+}
+
 ```
