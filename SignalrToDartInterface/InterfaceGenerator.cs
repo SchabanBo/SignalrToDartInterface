@@ -53,8 +53,11 @@ namespace SignalRToDartInterface {
             if (_request.IsSignalRHub) {
                 result += $"// File generated at {DateTime.Now}";
                 result += result.AddNewLine();
-                result += "import 'package:signalr_core/signalr_core.dart';";
                 result += "import 'package:flutter/widgets.dart';";
+                result += result.AddNewLine();
+                result += "import 'package:flutter/foundation.dart';";
+                result += result.AddNewLine();
+                result += "import 'package:signalr_core/signalr_core.dart';";
                 result += result.AddNewLine();
             }
             result += $"class {_request.Type.Name}";
@@ -70,7 +73,13 @@ namespace SignalRToDartInterface {
             result += "}";
             foreach (var type in _typesToGenerate) {
                 result += result.AddNewLine(3);
-                result += type.IsEnum ? new EnumGenerator(type).Generate() : new InterfaceGenerator(new GenerateRequest(type, skipMethodsToChildren: _request.SkipMethodsToChildren)).Generate();
+                result += type.IsEnum ?
+                    new EnumGenerator(type).Generate()
+                    : new InterfaceGenerator(
+                        new GenerateRequest(type,
+                            skipMethodsToChildren: _request.SkipMethodsToChildren,
+                            mapEnumFromJsonAsString: _request.MapEnumToJsonAsString
+                            )).Generate();
             }
             return result;
         }
@@ -187,8 +196,13 @@ namespace SignalRToDartInterface {
                     to += $"'{name}': List<dynamic>.from({name}.map((x) =>";
                     to += isStandardTypes ? "x))" : " x.toJson()))";
                 } else if (typeProperty.PropertyType.IsEnum) {
-                    from += $" {name} = {type}.values[json['{name}'] as int]";
-                    to += $"'{name}': {name}.index";
+                    if (_request.MapEnumToJsonAsString) {
+                        from += $" {name} = {type}.values.firstWhere((f)=> f.toString() == (json['{name}'] as String))";
+                        to += $"'{name}': describeEnum({name})";
+                    } else {
+                        from += $" {name} = {type}.values[json['{name}'] as int]";
+                        to += $"'{name}': {name}.index";
+                    }
                 } else {
                     from += $" {name} = json['{name}'] as {type}";
                     to += $"'{name}': {name}";

@@ -19,7 +19,7 @@ namespace SignalRToDartInterface {
         static void Main(string[] args) {
             var result = ConvertSignalRToDart.Convert(Requests.ToList());
             Console.WriteLine(result);
-            File.WriteAllText("signalRInterface.dart", result);
+            File.WriteAllText("signalRInterface.g.dart", result);
             Console.ReadLine();
         }
     }
